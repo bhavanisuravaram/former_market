@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} – FarmConnect{% endblock %}
+{% block content %}
+
+<div class="detail-layout">
+  <div>
+    <div class="detail-img">
+      <img src="{{ product.image_url or '/static/images/default.jpg' }}" alt="{{ product.name }}">
+    </div>
+
+    <div style="margin-top:2.5rem">
+      <h2 style="font-weight:700;margin-bottom:1rem;color:var(--green-dark)">Customer Reviews</h2>
+      {% if product.review_count > 0 %}
+      <div class="rating-bar">
+        <div class="rating-big">{{ product.avg_rating }}</div>
+        <div class="rating-stars">
+          <div class="stars" style="font-size:1.4rem">{% for i in range(product.avg_rating|int) %}★{% endfor %}{% for i in range(5-product.avg_rating|int) %}☆{% endfor %}</div>
+          <div style="font-size:.82rem;color:var(--muted)">{{ product.review_count }} review{{ 's' if product.review_count != 1 }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% for r in reviews %}
+      <div class="review-card">
+        <div class="review-header">
+          <span class="reviewer">{{ r.user_name }}</span>
+          <span class="review-date">{{ r.created_at[:10] }}</span>
+        </div>
+        <div class="stars" style="margin-bottom:.4rem">{% for i in range(r.rating) %}★{% endfor %}{% for i in range(5-r.rating) %}☆{% endfor %}</div>
+        <p class="review-text">{{ r.comment }}</p>
+      </div>
+      {% endfor %}
+
+      {% if user and user.role == 'consumer' %}
+      <div class="review-form">
+        <h3 style="font-weight:700;margin-bottom:1rem">Write a Review</h3>
+        <form action="/review/{{ product.product_id }}" method="POST">
+          <div style="margin-bottom:1rem">
+            <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem">Your Rating</p>
+            <div class="star-input">
+              {% for i in range(5,0,-1) %}
+              <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}" {{ 'checked' if i==5 }}/>
+              <label for="star{{ i }}" class="star-label">★</label>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Your Review</label>
+            <textarea name="comment" rows="3" placeholder="Share your experience..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <a href="/products" style="color:var(--muted);font-size:.85rem;display:block;margin-bottom:1rem">← Back to Marketplace</a>
+
+    <div class="detail-badges" style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+      {% if product.organic %}<span class="badge badge-organic">🌿 Organic</span>{% endif %}
+      <span class="badge badge-cat">{{ product.category }}</span>
+      <span class="status {{ product.status }}">{{ product.status }}</span>
+    </div>
+
+    <h1 class="detail-info" style="font-family:var(--font-serif);font-size:2rem;font-weight:900;color:var(--green-dark);margin-bottom:.25rem">{{ product.name }}</h1>
+    <div class="detail-farmer-row">
+      <span style="color:var(--muted)">by</span>
+      <strong style="color:var(--green)">{{ product.farmer_name }}</strong>
+      <span style="color:var(--muted)">·</span>
+      <span style="color:var(--muted);font-size:.85rem">{{ product.farm_name }}</span>
+    </div>
+
+    <div style="display:flex;align-items:baseline;gap:.3rem;margin:.5rem 0">
+      <span class="stars">{% for i in range(product.avg_rating|int) %}★{% endfor %}{% for i in range(5-product.avg_rating|int) %}☆{% endfor %}</span>
+      <span class="stars-count">({{ product.review_count }} reviews)</span>
+    </div>
+
+    <div style="font-family:var(--font-serif);font-size:2.8rem;font-weight:900;color:var(--green);margin:.5rem 0">
+      ₹{{ product.price }}<span style="font-size:1rem;color:var(--muted);font-family:var(--font)">/{{ product.unit }}</span>
+    </div>
+
+    <p style="color:var(--muted);line-height:1.75;margin-bottom:1.5rem;font-size:.95rem">{{ product.description }}</p>
+
+    <div class="detail-meta-grid">
+      <div class="detail-meta-item"><label>Stock</label><span>{{ product.stock }} {{ product.unit }} available</span></div>
+      <div class="detail-meta-item"><label>Category</label><span>{{ product.category }}</span></div>
+      <div class="detail-meta-item"><label>Type</label><span>{{ 'Organic' if product.organic else 'Conventional' }}</span></div>
+      <div class="detail-meta-item"><label>Listed</label><span>{{ product.created_at[:10] }}</span></div>
+    </div>
+
+    {% if user and user.role == 'consumer' %}
+      {% if already_applied %}
+      <div style="background:var(--green-light);border:1px solid var(--green-bright);border-radius:10px;padding:1rem;text-align:center;margin-bottom:1rem">
+        <strong style="color:var(--green-dark)">✓ Already in your orders</strong>
+      </div>
+      {% elif product.status == 'active' and product.stock > 0 %}
+      <form action="/cart/add/{{ product.product_id }}" method="POST">
+        <div class="qty-row">
+          <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" class="qty-input"/>
+          <span style="color:var(--muted);font-size:.85rem">{{ product.unit }}</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">🛒 Add to Cart</button>
+      </form>
+      {% else %}
+      <div style="background:var(--red-light);border-radius:10px;padding:1rem;text-align:center">
+        <strong style="color:var(--red)">Out of Stock</strong>
+      </div>
+      {% endif %}
+    {% elif not user %}
+    <div class="sidebar-card" style="text-align:center">
+      <p style="color:var(--muted);margin-bottom:1rem">Login to purchase</p>
+      <a href="/login" class="btn btn-primary btn-full">Login to Buy</a>
+    </div>
+    {% elif user.role == 'farmer' %}
+    <div class="sidebar-card">
+      <p style="color:var(--muted);font-size:.88rem">This is a consumer-only action.</p>
+    </div>
+    {% endif %}
+
+    {% if farmer %}
+    <div class="sidebar-card" style="margin-top:1rem">
+      <h4 style="font-weight:700;margin-bottom:.75rem;color:var(--green-dark)">About the Farmer</h4>
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <div class="av-circle">{{ farmer.name[0]|upper }}</div>
+        <div>
+          <div style="font-weight:700">{{ farmer.name }}</div>
+          <div style="font-size:.82rem;color:var(--green)">{{ farmer.farm_name }}</div>
+          <div style="font-size:.78rem;color:var(--muted)">📍 {{ farmer.location }}</div>
+        </div>
+      </div>
+      {% if farmer.bio %}
+      <p style="font-size:.85rem;color:var(--muted)">{{ farmer.bio }}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

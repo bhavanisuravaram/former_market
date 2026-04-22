@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}FarmConnect – Farm to Table{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-brand">
+    <span class="brand-icon">🌾</span>
+    <span>Farm<span class="brand-accent">Connect</span></span>
+  </a>
+  <div class="nav-center">
+    <a href="/products">Marketplace</a>
+    <a href="/farmers">Our Farmers</a>
+    {% if user %}
+      {% if user.role == 'farmer' %}
+        <a href="/farmer/dashboard">Dashboard</a>
+        <a href="/farmer/add-product" class="nav-cta">+ List Product</a>
+      {% else %}
+        <a href="/consumer/dashboard">Dashboard</a>
+        <a href="/cart" class="nav-cta">🛒 Cart</a>
+      {% endif %}
+    {% endif %}
+  </div>
+  <div class="nav-right">
+    {% if user %}
+      <a href="/profile" class="nav-avatar">
+        <span class="av-circle">{{ user.name[0]|upper }}</span>
+        <span>{{ user.name.split()[0] }}</span>
+      </a>
+      <a href="/logout" class="btn-ghost-sm">Logout</a>
+    {% else %}
+      <a href="/login" class="btn-ghost-sm">Login</a>
+      <a href="/register" class="btn-fill-sm">Join Free</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div class="flash-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">{{ '✓' if cat=='success' else '⚠' }} {{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">🌾 FarmConnect</div>
+      <p class="footer-tagline">Empowering farmers. Feeding communities.<br>Zero middlemen. 100% fresh.</p>
+      <div class="aws-tags">
+        <span>EC2</span><span>S3</span><span>SNS</span><span>SQS</span><span>SES</span><span>CloudWatch</span><span>IAM</span>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h5>Marketplace</h5>
+      <a href="/products">All Products</a>
+      <a href="/farmers">Our Farmers</a>
+      <a href="/register">Sell on FarmConnect</a>
+    </div>
+    <div class="footer-col">
+      <h5>Account</h5>
+      <a href="/register">Register</a>
+      <a href="/login">Login</a>
+      <a href="/profile">Profile</a>
+    </div>
+    <div class="footer-col">
+      <h5>Our Mission</h5>
+      <a href="#">No Middlemen</a>
+      <a href="#">Better Farmer Income</a>
+      <a href="#">Fresh Local Produce</a>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <span>© 2024 FarmConnect · Powered by AWS</span>
+    <span>Made with 💚 for Indian Farmers</span>
+  </div>
+</footer>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

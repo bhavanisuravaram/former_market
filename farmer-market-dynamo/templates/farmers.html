@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Our Farmers – FarmConnect{% endblock %}
+{% block content %}
+<div style="background:linear-gradient(135deg,var(--green-dark),var(--green));padding:3rem 4% 2rem;color:#fff">
+  <div class="sec-label" style="background:rgba(255,255,255,.15);color:#A7F3D0">Our Community</div>
+  <h1 style="font-family:var(--font-serif);font-size:2.2rem;font-weight:900;margin:.5rem 0">Meet the Farmers</h1>
+  <p style="color:#A7F3D0">{{ farmers|length }} farmers growing food with love</p>
+</div>
+<section class="section">
+  <div class="farmers-grid">
+    {% for f in farmers %}
+    <div class="farmer-card">
+      <div class="farmer-avatar">{{ f.name[0]|upper }}</div>
+      <div class="farmer-name">{{ f.name }}</div>
+      <div class="farmer-farm">{{ f.farm_name }}</div>
+      <div class="farmer-loc">📍 {{ f.location or 'India' }}</div>
+      {% if f.verified %}<span class="farmer-badge">✓ Verified Farmer</span>{% endif %}
+      <div class="farmer-stats">
+        <div class="farmer-stat"><strong>{{ f.product_count }}</strong><span>Products</span></div>
+        <div class="farmer-stat"><strong>{{ f.joined_at[:7] }}</strong><span>Joined</span></div>
+      </div>
+      {% if f.bio %}
+      <p style="font-size:.82rem;color:var(--muted);margin-top:.75rem">{{ f.bio[:100] }}...</p>
+      {% endif %}
+      <a href="/products?search={{ f.name }}" class="btn btn-primary btn-full" style="margin-top:1rem;display:block;text-align:center;padding:.65rem">View Products →</a>
+    </div>
+    {% else %}
+    <div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">👨‍🌾</div>
+      <h3>No farmers yet</h3>
+      <p>Be the first farmer to join!</p>
+      <a href="/register" class="btn btn-primary">Join as Farmer</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

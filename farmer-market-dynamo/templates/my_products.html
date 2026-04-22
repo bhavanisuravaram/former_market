@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}My Products – FarmConnect{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <div class="page-head">
+    <h1>My Products</h1>
+    <a href="/farmer/add-product" class="btn btn-primary">+ Add Product</a>
+  </div>
+  <div style="overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)">
+    <table class="prod-table">
+      <thead><tr>
+        <th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <img src="{{ p.image_url or '/static/images/default.jpg' }}" class="prod-thumb" alt="{{ p.name }}">
+              <div>
+                <div style="font-weight:700">{{ p.name }}</div>
+                {% if p.organic %}<span class="badge badge-organic" style="font-size:.65rem">🌿 Organic</span>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td>{{ p.category }}</td>
+          <td><strong style="color:var(--green)">₹{{ p.price }}/{{ p.unit }}</strong></td>
+          <td>{{ p.stock }}</td>
+          <td><span class="status {{ p.status }}">{{ p.status }}</span></td>
+          <td>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+              <a href="/product/{{ p.product_id }}" class="btn-sm btn-sm-green">View</a>
+              <a href="/product/toggle/{{ p.product_id }}" class="btn-sm btn-sm-amber">{{ 'Deactivate' if p.status=='active' else 'Activate' }}</a>
+              <a href="/product/delete/{{ p.product_id }}" class="btn-sm btn-sm-red" onclick="return confirm('Delete?')">Delete</a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--muted)">No products yet. <a href="/farmer/add-product" style="color:var(--green)">Add one!</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

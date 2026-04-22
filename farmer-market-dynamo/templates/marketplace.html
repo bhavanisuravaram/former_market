@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Marketplace — FarmerConnect{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>🛒 Fresh Marketplace</h1>
+  <p>{{ products|length }} product{{ 's' if products|length != 1 }} available directly from farmers</p>
+</div>
+
+<div class="marketplace-layout">
+  <aside class="filter-panel">
+    <h3>🔍 Filter Products</h3>
+    <form action="/marketplace" method="GET">
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" name="search" value="{{ search }}" placeholder="Product, farmer..."/>
+      </div>
+      <div class="filter-group">
+        <label>Category</label>
+        <select name="category">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {{ 'selected' if category==cat }}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Price Range (₹)</label>
+        <div class="filter-row">
+          <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min"/>
+          <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max"/>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Sort By</label>
+        <select name="sort">
+          <option value="newest" {{ 'selected' if sort_by=='newest' }}>Newest First</option>
+          <option value="price_asc" {{ 'selected' if sort_by=='price_asc' }}>Price: Low to High</option>
+          <option value="price_desc" {{ 'selected' if sort_by=='price_desc' }}>Price: High to Low</option>
+          <option value="rating" {{ 'selected' if sort_by=='rating' }}>Top Rated</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <div class="checkbox-group">
+          <input type="checkbox" name="organic" id="organic" value="1" {{ 'checked' if organic }}/>
+          <label for="organic">🌱 Organic Only</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary full-w">Apply Filters</button>
+      <a href="/marketplace" class="btn btn-ghost full-w" style="margin-top:.5rem">Clear All</a>
+    </form>
+  </aside>
+
+  <div>
+    <div class="cat-pills" style="margin-bottom:1.5rem">
+      <a href="/marketplace" class="cat-pill {{ 'active' if not category }}">🌿 All</a>
+      {% for cat in categories %}
+      <a href="/marketplace?category={{ cat|urlencode }}" class="cat-pill {{ 'active' if category==cat }}">{{ cat }}</a>
+      {% endfor %}
+    </div>
+
+    {% if products %}
+    <div class="products-grid">
+      {% for p in products %}
+      <div class="product-card">
+        <div class="product-img">
+          <img src="{{ p.image_url or 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400' }}"
+               alt="{{ p.name }}" loading="lazy"/>
+          <div class="product-badge">
+            {% if p.organic %}<span class="badge badge-organic">🌱 Organic</span>{% endif %}
+            {% if p.featured %}<span class="badge badge-featured">⭐</span>{% endif %}
+            {% if p.quantity < 10 %}<span class="badge" style="background:#FEE2E2;color:#991B1B">⚡ Low Stock</span>{% endif %}
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-category">{{ p.category }}</div>
+          <div class="product-name">{{ p.name }}</div>
+          <div class="product-farmer">👨‍🌾 {{ p.farmer_name }} · {{ p.farmer_location }}</div>
+          {% if p.rating > 0 %}
+          <div class="product-rating">
+            <span class="stars">{% for i in range(p.rating|int) %}★{% endfor %}</span>
+            <span>{{ p.rating }} ({{ p.review_count }} reviews)</span>
+          </div>
+          {% endif %}
+          <div class="product-footer">
+            <div class="product-price">₹{{ p.price }}<span>/{{ p.unit }}</span></div>
+            <a href="/product/{{ p.product_id }}" class="btn-buy">View →</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <span class="empty-icon">🌾</span>
+      <h3>No products found</h3>
+      <p>Try adjusting your filters or browse all categories.</p>
+      <a href="/marketplace" class="btn btn-primary">Clear Filters</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

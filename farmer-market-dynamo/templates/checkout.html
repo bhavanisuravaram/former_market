@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Checkout – FarmConnect{% endblock %}
+{% block content %}
+<div class="checkout-layout">
+  <div>
+    <h1 style="font-family:var(--font-serif);font-size:2rem;font-weight:900;color:var(--green-dark);margin-bottom:1.5rem">Checkout</h1>
+    <form action="/checkout" method="POST" id="checkoutForm">
+      <div class="form-card">
+        <h3>Delivery Information</h3>
+        <div class="form-group"><label>Delivery Address *</label><textarea name="address" rows="3" placeholder="Full address including pincode..." required>{{ user.location }}</textarea></div>
+        <div class="form-group"><label>Phone Number *</label><input type="tel" name="phone" value="{{ user.phone or '' }}" placeholder="+91 9999999999" required/></div>
+      </div>
+      <div class="form-card">
+        <h3>Order Items</h3>
+        {% for item in items %}
+        <div style="display:flex;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border)">
+          <span>{{ item.name }} <span style="color:var(--muted)">× {{ item.quantity }} {{ item.unit }}</span> <span style="color:var(--muted);font-size:.8rem">by {{ item.farmer_name }}</span></span>
+          <strong style="color:var(--green)">₹{{ (item.price * item.quantity)|int }}</strong>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg">Place Order · ₹{{ total|int }} →</button>
+    </form>
+  </div>
+  <div>
+    <div class="cart-summary">
+      <h3 style="font-weight:700;margin-bottom:1rem">Order Total</h3>
+      {% for item in items %}
+      <div class="summary-row"><span>{{ item.name }}</span><span>₹{{ (item.price * item.quantity)|int }}</span></div>
+      {% endfor %}
+      <div style="border-top:1px solid var(--border);padding-top:.75rem;margin-top:.5rem;display:flex;justify-content:space-between">
+        <strong>Total</strong><span class="summary-total">₹{{ total|int }}</span>
+      </div>
+      <div style="background:var(--green-pale);border-radius:8px;padding:.75rem;margin-top:1rem;font-size:.82rem;color:var(--green-dark)">
+        🔔 You'll receive an order confirmation email via AWS SNS after placing the order.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Buy {{ product.name }} — FarmerConnect{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="form-header"><h1>🛒 Complete Your Order</h1><p>You are purchasing directly from the farmer — no middlemen!</p></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+    <div class="form-card" style="margin-bottom:0">
+      <h3>🌾 Product Summary</h3>
+      <img src="{{ product.image_url or 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400' }}" style="width:100%;height:200px;object-fit:cover;border-radius:10px;margin-bottom:1rem" alt="{{ product.name }}"/>
+      <h2 style="font-family:var(--font-head);font-weight:800;color:var(--green3);margin-bottom:.25rem">{{ product.name }}</h2>
+      <p style="color:var(--emerald);font-size:.9rem;margin-bottom:.5rem">👨‍🌾 {{ product.farmer_name }} · {{ product.farmer_location }}</p>
+      {% if product.organic %}<span class="badge badge-organic" style="margin-bottom:.75rem;display:inline-block">🌱 Organic</span>{% endif %}
+      <p style="color:var(--muted);font-size:.9rem;line-height:1.6;margin-bottom:.75rem">{{ product.description }}</p>
+      <div style="display:flex;justify-content:space-between;padding:.75rem 0;border-top:1px solid var(--border)">
+        <span style="color:var(--muted)">Price per {{ product.unit }}</span>
+        <strong style="color:var(--green);font-size:1.2rem">₹{{ product.price }}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.5rem 0">
+        <span style="color:var(--muted)">Available Stock</span>
+        <strong>{{ product.quantity }} {{ product.unit }}</strong>
+      </div>
+    </div>
+    <div>
+      <form action="/buy/{{ product.product_id }}" method="POST">
+        <div class="form-card">
+          <h3>📦 Order Details</h3>
+          <div class="form-group"><label>Quantity ({{ product.unit }}) *</label>
+            <input type="number" name="quantity" id="qty" value="1" min="1" max="{{ product.quantity }}" required/>
+          </div>
+          <div style="background:var(--light);padding:1rem;border-radius:10px;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;margin-bottom:.4rem"><span style="color:var(--muted)">Unit Price</span><span>₹{{ product.price }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-family:var(--font-head);font-size:1.3rem;font-weight:800">
+              <span style="color:var(--green3)">Total</span>
+              <span id="total-display" style="color:var(--green)" data-price="{{ product.price }}">₹{{ product.price }}</span>
+            </div>
+          </div>
+          <div class="form-group"><label>Delivery Address *</label><textarea name="address" rows="3" placeholder="House no., Street, Area, City, Pincode" required></textarea></div>
+          <div class="form-group"><label>Payment Method</label>
+            <select name="payment"><option value="COD">💵 Cash on Delivery</option><option value="UPI">📱 UPI</option><option value="Online">💳 Online</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem">
+          <button type="submit" class="btn btn-primary large">Confirm Order 🌾</button>
+          <a href="/product/{{ product.product_id }}" class="btn btn-ghost">← Back</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+const qtyEl = document.getElementById('qty');
+const totEl = document.getElementById('total-display');
+if (qtyEl && totEl) {
+  qtyEl.addEventListener('input', () => {
+    totEl.textContent = '₹' + (parseFloat(totEl.dataset.price) * parseFloat(qtyEl.value || 1)).toFixed(2);
+  });
+}
+</script>
+{% endblock %}

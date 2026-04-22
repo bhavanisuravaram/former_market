@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}List Product – FarmConnect{% endblock %}
+{% block content %}
+<div class="form-page-wide">
+  <h1 class="form-title">List Your Product</h1>
+  <p class="form-subtitle">Add your fresh produce to the marketplace</p>
+  <form action="/farmer/add-product" method="POST" enctype="multipart/form-data">
+    <div class="form-card">
+      <h3>Product Information</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Product Name *</label><input type="text" name="name" placeholder="e.g. Fresh Tomatoes" required/></div>
+        <div class="form-group"><label>Category *</label>
+          <select name="category" required>
+            <option value="">Select category</option>
+            <option>Vegetables</option><option>Fruits</option><option>Grains</option><option>Dairy</option><option>Spices</option><option>Pulses</option><option>Others</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Description *</label><textarea name="description" rows="4" placeholder="Describe your product — how it's grown, freshness, benefits..." required></textarea></div>
+    </div>
+    <div class="form-card">
+      <h3>Pricing & Stock</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Price (₹) *</label><input type="number" name="price" min="1" step="0.01" placeholder="40" required/></div>
+        <div class="form-group"><label>Unit *</label>
+          <select name="unit" required><option>kg</option><option>gram</option><option>litre</option><option>piece</option><option>dozen</option><option>bunch</option><option>500g</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Stock Available *</label><input type="number" name="stock" min="1" placeholder="100" required/></div>
+        <div class="form-group" style="display:flex;align-items:center;padding-top:1.5rem">
+          <label class="form-check"><input type="checkbox" name="organic"/> &nbsp; 🌿 Organic Product</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-card">
+      <h3>Product Image</h3>
+      <div class="form-group"><label>Upload Image (optional)</label><input type="file" name="image" accept="image/*"/></div>
+      <p style="font-size:.82rem;color:var(--muted)">Image will be uploaded to AWS S3. Leave blank to use default.</p>
+    </div>
+    <div class="form-actions">
+      <a href="/farmer/dashboard" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary btn-lg">List Product →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Login – FarmConnect{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">🌾</div>
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-sub">Login to your FarmConnect account</p>
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" name="email" placeholder="you@email.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" name="password" placeholder="Your password" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg">Login →</button>
+    </form>
+    <div class="auth-demo">
+      <p>Demo Accounts (password: password123)</p>
+      <div class="demo-row"><span>👨‍🌾 Farmer</span><span>ramu@farmer.com</span></div>
+      <div class="demo-row"><span>🛒 Consumer</span><span>arjun@consumer.com</span></div>
+    </div>
+    <p class="auth-switch">New here? <a href="/register">Register free</a></p>
+  </div>
+</div>
+{% endblock %}

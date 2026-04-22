@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}FarmConnect – Fresh from the Farm{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">🌿 Zero Middlemen &nbsp;·&nbsp; 100% Fresh &nbsp;·&nbsp; Direct from Farmers</div>
+    <h1 class="hero-title">Fresh Produce,<br><em>Directly from</em><br>the Farm</h1>
+    <p class="hero-sub">We connect Indian farmers directly with consumers. Better prices for farmers, fresher food for you.</p>
+    <div class="hero-actions">
+      <a href="/products" class="btn-hero-primary">Shop Fresh Produce →</a>
+      <a href="/register" class="btn-hero-outline">Sell Your Harvest</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>{{ stats.farmers }}</strong><span>Farmers</span></div>
+      <div class="hero-stat"><strong>{{ stats.products }}</strong><span>Products</span></div>
+      <div class="hero-stat"><strong>{{ stats.consumers }}</strong><span>Consumers</span></div>
+      <div class="hero-stat"><strong>{{ stats.orders }}</strong><span>Orders</span></div>
+    </div>
+  </div>
+  <div class="hero-image">🌾</div>
+</section>
+
+<section class="section">
+  <div class="sec-label">How It Works</div>
+  <h2 class="sec-title">Farm to Table in 3 Simple Steps</h2>
+  <p class="sec-sub">No cold storage. No middlemen. Just fresh, honest food.</p>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-icon">👨‍🌾</div>
+      <h3>Farmer Lists</h3>
+      <p>Farmers upload their fresh harvest with prices they set themselves.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-icon">🛒</div>
+      <h3>Consumer Buys</h3>
+      <p>You browse, pick fresh produce, and place your order online.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-icon">📦</div>
+      <h3>Direct Delivery</h3>
+      <p>Farmer ships directly to you. AWS SNS sends live order updates.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <div class="step-icon">💰</div>
+      <h3>Farmer Earns More</h3>
+      <p>100% of the price goes to the farmer. No middleman commission.</p>
+    </div>
+  </div>
+</section>
+
+{% if categories %}
+<section class="section section-alt">
+  <div class="sec-header">
+    <div>
+      <div class="sec-label">Categories</div>
+      <h2 class="sec-title">Shop by Category</h2>
+    </div>
+    <a href="/products" class="view-all">View All Products →</a>
+  </div>
+  <div class="cats-row">
+    <a href="/products" class="cat-pill active">All</a>
+    {% for cat in categories %}
+    <a href="/products?category={{ cat }}" class="cat-pill">{{ cat }}</a>
+    {% endfor %}
+  </div>
+  <div class="products-grid">
+    {% for p in products %}
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="{{ p.image_url or '/static/images/default.jpg' }}" alt="{{ p.name }}" class="product-img">
+        <div class="product-badges">
+          {% if p.organic %}<span class="badge badge-organic">🌿 Organic</span>{% endif %}
+          {% if p.featured %}<span class="badge badge-featured">⭐ Featured</span>{% endif %}
+          <span class="badge badge-cat">{{ p.category }}</span>
+        </div>
+      </div>
+      <div class="product-body">
+        <div class="product-name">{{ p.name }}</div>
+        <div class="product-farmer">By <span>{{ p.farmer_name }}</span> · {{ p.farm_name }}</div>
+        <div>
+          <span class="stars">{% for i in range(p.avg_rating|int) %}★{% endfor %}{% for i in range(5 - p.avg_rating|int) %}☆{% endfor %}</span>
+          <span class="stars-count">({{ p.review_count }})</span>
+        </div>
+        <div class="product-footer">
+          <div>
+            <span class="product-price">₹{{ p.price }}</span>
+            <span class="product-unit">/{{ p.unit }}</span>
+          </div>
+          <a href="/product/{{ p.product_id }}" class="btn-cart">View →</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">🌱</div>
+      <h3>No products yet</h3>
+      <p>Be the first farmer to list your harvest!</p>
+      <a href="/register" class="btn btn-primary">Register as Farmer</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="impact-section">
+  <div class="sec-label" style="margin-bottom:1.5rem">Our Impact</div>
+  <h2 class="sec-title" style="color:#fff;margin-bottom:3rem">Changing Lives, One Order at a Time</h2>
+  <div class="impact-grid">
+    <div class="impact-item"><strong>{{ stats.farmers }}+</strong><span>Farmers Empowered</span></div>
+    <div class="impact-item"><strong>{{ stats.orders }}+</strong><span>Orders Delivered</span></div>
+    <div class="impact-item"><strong>0</strong><span>Middlemen</span></div>
+    <div class="impact-item"><strong>100%</strong><span>Fresh Produce</span></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="sec-header">
+    <div>
+      <div class="sec-label">Our Farmers</div>
+      <h2 class="sec-title">Meet the Growers</h2>
+    </div>
+    <a href="/farmers" class="view-all">All Farmers →</a>
+  </div>
+  <div class="farmers-grid">
+    {% for f in [] %}{% endfor %}
+    <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted)">
+      <a href="/farmers" class="btn btn-primary">Meet Our Farmers →</a>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" style="text-align:center">
+  <div class="sec-label">Join FarmConnect</div>
+  <h2 class="sec-title" style="margin:0 auto .75rem">Are You a Farmer?</h2>
+  <p style="color:var(--muted);max-width:500px;margin:0 auto 2rem">List your produce and sell directly to consumers. Set your own price. No commission. Real-time order notifications via AWS SNS.</p>
+  <a href="/register" class="btn btn-primary btn-lg">Start Selling Today →</a>
+</section>
+
+{% endblock %}

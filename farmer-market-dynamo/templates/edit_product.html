@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Edit Product — FarmerConnect{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="form-header"><h1>✏️ Edit Product</h1><p>Update your product listing</p></div>
+  <form action="/farmer/edit-product/{{ product.product_id }}" method="POST" enctype="multipart/form-data">
+    <div class="form-card">
+      <h3>📋 Product Information</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Product Name *</label><input type="text" name="name" value="{{ product.name }}" required/></div>
+        <div class="form-group"><label>Category *</label>
+          <select name="category" required>{% for cat in categories %}<option value="{{ cat }}" {{ 'selected' if cat==product.category }}>{{ cat }}</option>{% endfor %}</select>
+        </div>
+      </div>
+      <div class="form-group"><label>Description *</label><textarea name="description" rows="4" required>{{ product.description }}</textarea></div>
+      <div class="checkbox-group"><input type="checkbox" name="organic" id="organic" {{ 'checked' if product.organic }}/><label for="organic">🌱 Organic Product</label></div>
+    </div>
+    <div class="form-card">
+      <h3>💰 Pricing and Stock</h3>
+      <div class="form-row-3">
+        <div class="form-group"><label>Price (INR) *</label><input type="number" name="price" step="0.01" value="{{ product.price }}" required/></div>
+        <div class="form-group"><label>Unit *</label>
+          <select name="unit" required>{% for u in ['kg','gram','litre','dozen','bundle','piece','box','500g','250g'] %}<option value="{{ u }}" {{ 'selected' if u==product.unit }}>{{ u }}</option>{% endfor %}</select>
+        </div>
+        <div class="form-group"><label>Quantity *</label><input type="number" name="quantity" value="{{ product.quantity }}" required/></div>
+      </div>
+    </div>
+    <div class="form-card">
+      <h3>📷 Update Photo (optional)</h3>
+      <div style="margin-bottom:1rem"><img src="{{ product.image_url }}" style="width:120px;height:120px;object-fit:cover;border-radius:10px" alt="{{ product.name }}"/></div>
+      <div class="form-group"><input type="file" name="image" accept="image/*"/></div>
+    </div>
+    <div style="display:flex;gap:1rem">
+      <button type="submit" class="btn btn-primary large">Save Changes ✅</button>
+      <a href="/farmer/dashboard" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

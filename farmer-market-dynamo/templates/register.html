@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Register – FarmConnect{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">🌾</div>
+    <h1 class="auth-title">Join FarmConnect</h1>
+    <p class="auth-sub">Farmer or Consumer? Choose your role below.</p>
+
+    <div class="role-toggle">
+      <button type="button" class="role-btn active" onclick="setRole('farmer')">👨‍🌾 I'm a Farmer</button>
+      <button type="button" class="role-btn" onclick="setRole('consumer')">🛒 I'm a Consumer</button>
+    </div>
+
+    <form action="/register" method="POST">
+      <input type="hidden" name="role" id="roleInput" value="farmer"/>
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="name" placeholder="Your full name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" name="email" placeholder="you@email.com" required/>
+      </div>
+      <div class="form-group" id="farmGroup">
+        <label>Farm Name *</label>
+        <input type="text" name="farm_name" placeholder="e.g. Reddy Organic Farm"/>
+      </div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" name="phone" placeholder="+91 9999999999"/>
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" name="location" placeholder="City, State"/>
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" name="password" placeholder="Min 6 characters" minlength="6" required/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg">Create Account →</button>
+    </form>
+
+    <div class="auth-demo">
+      <p>Demo Accounts (password: password123)</p>
+      <div class="demo-row"><span>👨‍🌾 Farmer</span><span>ramu@farmer.com</span></div>
+      <div class="demo-row"><span>👨‍🌾 Farmer</span><span>lakshmi@farmer.com</span></div>
+      <div class="demo-row"><span>🛒 Consumer</span><span>arjun@consumer.com</span></div>
+    </div>
+    <p class="auth-switch">Already registered? <a href="/login">Login here</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Cart – FarmConnect{% endblock %}
+{% block content %}
+<div class="cart-layout">
+  <div>
+    <h1 style="font-family:var(--font-serif);font-size:2rem;font-weight:900;color:var(--green-dark);margin-bottom:1.5rem">🛒 Your Cart</h1>
+    {% for item in items %}
+    <div class="cart-item">
+      <img src="{{ item.image_url or '/static/images/default.jpg' }}" class="cart-item-img" alt="{{ item.name }}">
+      <div class="cart-item-info">
+        <div class="cart-item-name">{{ item.name }}</div>
+        <div class="cart-item-farmer">by {{ item.farmer_name }}</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem">
+          <span class="cart-item-price">₹{{ item.price }}/{{ item.unit }}</span>
+          <span style="color:var(--muted);font-size:.85rem">× {{ item.quantity }} = <strong style="color:var(--green-dark)">₹{{ (item.price * item.quantity)|int }}</strong></span>
+        </div>
+      </div>
+      <a href="/cart/remove/{{ item.product_id }}" class="btn-sm btn-sm-red" style="flex-shrink:0">Remove</a>
+    </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">🛒</div>
+      <h3>Cart is empty</h3>
+      <p>Add fresh produce from our farmers.</p>
+      <a href="/products" class="btn btn-primary">Shop Now</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if items %}
+  <div>
+    <div class="cart-summary">
+      <h3 style="font-weight:700;margin-bottom:1rem">Order Summary</h3>
+      {% for item in items %}
+      <div class="summary-row">
+        <span>{{ item.name }} × {{ item.quantity }}</span>
+        <span>₹{{ (item.price * item.quantity)|int }}</span>
+      </div>
+      {% endfor %}
+      <div class="summary-row" style="border:none;padding-top:.75rem;margin-top:.25rem">
+        <strong>Total</strong>
+        <span class="summary-total">₹{{ total|int }}</span>
+      </div>
+      <a href="/checkout" class="btn btn-primary btn-full btn-lg" style="margin-top:1rem;display:block;text-align:center">Proceed to Checkout →</a>
+      <a href="/products" class="btn btn-outline btn-full" style="margin-top:.5rem;display:block;text-align:center;padding:.75rem">Continue Shopping</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

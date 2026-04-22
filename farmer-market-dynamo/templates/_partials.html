@@ -1,0 +1,48 @@
+<!-- ADD PRODUCT -->
+{% if template_name == 'add_product' %}
+{% extends "base.html" %}
+{% block title %}List New Product — FarmerConnect{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="form-header">
+    <h1>🌱 List a New Product</h1>
+    <p>Add your fresh produce to the marketplace. AWS Rekognition will verify your image automatically.</p>
+  </div>
+  <form action="/farmer/add-product" method="POST" enctype="multipart/form-data">
+    <div class="form-card">
+      <h3>📋 Basic Information</h3>
+      <div class="form-row">
+        <div class="form-group"><label>Product Name *</label><input type="text" name="name" placeholder="e.g. Fresh Tomatoes" required/></div>
+        <div class="form-group"><label>Category *</label>
+          <select name="category" required><option value="">Select category</option>{% for cat in categories %}<option>{{ cat }}</option>{% endfor %}</select>
+        </div>
+      </div>
+      <div class="form-group"><label>Description *</label><textarea name="description" rows="4" placeholder="Describe your product — freshness, variety, how it's grown..." required></textarea></div>
+      <div class="checkbox-group"><input type="checkbox" name="organic" id="organic"/><label for="organic">🌱 This is an Organic Product (no synthetic pesticides/fertilizers)</label></div>
+    </div>
+
+    <div class="form-card">
+      <h3>💰 Pricing & Stock</h3>
+      <div class="form-row-3">
+        <div class="form-group"><label>Price (₹) *</label><input type="number" name="price" step="0.01" min="1" placeholder="e.g. 40" required/></div>
+        <div class="form-group"><label>Unit *</label>
+          <select name="unit" required><option value="kg">kg</option><option value="gram">gram</option><option value="litre">litre</option><option value="dozen">dozen</option><option value="bundle">bundle</option><option value="piece">piece</option><option value="box">box</option><option value="500g">500g</option><option value="250g">250g</option></select>
+        </div>
+        <div class="form-group"><label>Available Qty *</label><input type="number" name="quantity" min="1" placeholder="e.g. 100" required/></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h3>📷 Product Photo</h3>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Upload a clear photo of your product. Our AI (AWS Rekognition) will verify it's a genuine agricultural product.</p>
+      <div class="form-group"><label>Upload Image (JPG/PNG)</label><input type="file" name="image" accept="image/*"/></div>
+    </div>
+
+    <div style="display:flex;gap:1rem">
+      <button type="submit" class="btn btn-primary large">🌿 List Product</button>
+      <a href="/farmer/dashboard" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% endif %}

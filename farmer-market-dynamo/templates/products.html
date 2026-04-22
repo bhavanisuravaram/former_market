@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Marketplace – FarmConnect{% endblock %}
+{% block content %}
+
+<div style="background:linear-gradient(135deg,var(--green-dark),var(--green));padding:3rem 4% 2rem;color:#fff">
+  <div class="sec-label" style="background:rgba(255,255,255,.15);color:#A7F3D0">Marketplace</div>
+  <h1 style="font-family:var(--font-serif);font-size:2.2rem;font-weight:900;margin:.5rem 0">Fresh Produce</h1>
+  <p style="color:#A7F3D0">{{ products|length }} products available from local farmers</p>
+</div>
+
+<div class="products-layout">
+  <aside class="filter-sidebar">
+    <h3>🔍 Filter Products</h3>
+    <form action="/products" method="GET">
+      <div class="filter-block">
+        <label>Search</label>
+        <input class="filter-input" type="text" name="search" value="{{ search }}" placeholder="Product or farmer..."/>
+      </div>
+      <div class="filter-block">
+        <label>Category</label>
+        <select class="filter-select" name="category">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {{ 'selected' if category==cat }}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:.5rem">Apply Filters</button>
+      <a href="/products" class="btn btn-outline btn-full" style="margin-top:.5rem;display:block;text-align:center;padding:.75rem">Clear All</a>
+    </form>
+  </aside>
+
+  <div>
+    <div class="sort-bar">
+      <span class="results-count">{{ products|length }} product{{ 's' if products|length != 1 }}</span>
+      <div class="sort-btns">
+        <a href="?search={{ search }}&category={{ category }}&sort=newest" class="sort-btn {{ 'active' if sort_by=='newest' }}">Newest</a>
+        <a href="?search={{ search }}&category={{ category }}&sort=price_low" class="sort-btn {{ 'active' if sort_by=='price_low' }}">Price ↑</a>
+        <a href="?search={{ search }}&category={{ category }}&sort=price_high" class="sort-btn {{ 'active' if sort_by=='price_high' }}">Price ↓</a>
+        <a href="?search={{ search }}&category={{ category }}&sort=rating" class="sort-btn {{ 'active' if sort_by=='rating' }}">Top Rated</a>
+      </div>
+    </div>
+
+    <div class="products-grid">
+      {% for p in products %}
+      <div class="product-card">
+        <div class="product-img-wrap">
+          <img src="{{ p.image_url or '/static/images/default.jpg' }}" alt="{{ p.name }}" class="product-img">
+          <div class="product-badges">
+            {% if p.organic %}<span class="badge badge-organic">🌿 Organic</span>{% endif %}
+            <span class="badge badge-cat">{{ p.category }}</span>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-name">{{ p.name }}</div>
+          <div class="product-farmer">By <span>{{ p.farmer_name }}</span></div>
+          <div>
+            <span class="stars">{% for i in range(p.avg_rating|int) %}★{% endfor %}{% for i in range(5 - p.avg_rating|int) %}☆{% endfor %}</span>
+            <span class="stars-count">({{ p.review_count }})</span>
+          </div>
+          <div class="product-footer">
+            <div>
+              <span class="product-price">₹{{ p.price }}</span>
+              <span class="product-unit">/{{ p.unit }}</span>
+            </div>
+            <a href="/product/{{ p.product_id }}" class="btn-cart">View</a>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">🌱</div>
+        <h3>No products found</h3>
+        <p>Try adjusting your filters.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
