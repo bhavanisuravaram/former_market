@@ -4,16 +4,12 @@ from functools import wraps
 import uuid, os, boto3, json
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
-from botocore.exceptions import ClientError
-from decimal import Decimal   # ✅ ADDED
+from decimal import Decimal   # ✅ IMPORTANT
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'farmmarket-secret-2024')
 
-AWS_REGION    = os.environ.get('AWS_REGION', 'ap-south-1')
-SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN', '')
-S3_BUCKET     = os.environ.get('S3_BUCKET', '')
-SQS_QUEUE_URL = os.environ.get('SQS_QUEUE_URL', '')
+AWS_REGION = 'ap-south-1'
 
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 
@@ -23,6 +19,17 @@ orders_table   = dynamodb.Table('fm_orders')
 reviews_table  = dynamodb.Table('fm_reviews')
 cart_table     = dynamodb.Table('fm_cart')
 
+# ================= SAFE CONVERSION =================
+def convert_decimals(obj):
+    if isinstance(obj, list):
+        return [convert_decimals(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: convert_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, Decimal):
+        return float(obj)
+    return obj
+
+# ================= SCAN =================
 def scan_table(table, filter_expr=None):
     kwargs = {}
     if filter_expr:
@@ -36,60 +43,70 @@ def scan_table(table, filter_expr=None):
         kwargs['ExclusiveStartKey'] = resp['LastEvaluatedKey']
     return items
 
-def current_user():
-    uid = session.get('user_id')
-    if not uid:
-        return None
-    resp = users_table.get_item(Key={'user_id': uid})
-    return resp.get('Item')
+# ================= HOME =================
+@app.route('/')
+def index():
+    all_products = scan_table(products_table, Attr('status').eq('active'))
+    all_products = convert_decimals(all_products)
 
-def login_required(f):
-    @wraps(f)
-    def dec(*a, **kw):
-        if not session.get('user_id'):
-            return redirect(url_for('login'))
-        return f(*a, **kw)
-    return dec
+    all_products.sort(key=lambda x: x.get('created_at', ''), reverse=True)
 
-# ================== FIX 1: add_product ==================
-@app.route('/farmer/add-product', methods=['GET', 'POST'])
-@login_required
+    return render_template('index.html', products=all_products[:8])
+
+# ================= PRODUCTS =================
+@app.route('/products')
+def products():
+    all_products = scan_table(products_table, Attr('status').eq('active'))
+    all_products = convert_decimals(all_products)
+
+    all_products.sort(key=lambda p: p.get('price', 0))
+
+    return render_template('products.html', products=all_products)
+
+# ================= ADD PRODUCT =================
+@app.route('/add-product', methods=['POST'])
 def add_product():
-    if request.method == 'POST':
-        product = {
-            'product_id': str(uuid.uuid4()),
-            'name': request.form['name'],
-            'price': Decimal(request.form['price']),   # ✅ FIXED
-            'unit': request.form['unit'],
-            'stock': int(request.form['stock']),
-            'avg_rating': Decimal("0.0"),              # ✅ FIXED
-            'created_at': datetime.utcnow().isoformat(),
-            'status': 'active'
-        }
-        products_table.put_item(Item=product)
-        return redirect(url_for('index'))
-    return "Add Product Page"
+    product = {
+        'product_id': str(uuid.uuid4()),
+        'name': request.form['name'],
+        'price': Decimal(request.form['price']),   # ✅ FIXED
+        'unit': request.form['unit'],
+        'stock': int(request.form['stock']),
+        'avg_rating': Decimal("0.0"),              # ✅ FIXED
+        'status': 'active',
+        'created_at': datetime.utcnow().isoformat()
+    }
 
-# ================== FIX 2: checkout ==================
+    products_table.put_item(Item=product)
+    return redirect(url_for('index'))
+
+# ================= CART =================
+@app.route('/cart')
+def cart():
+    items = []
+    total = sum(Decimal(i['price']) * int(i['quantity']) for i in items)
+    return render_template('cart.html', items=items, total=float(total))
+
+# ================= CHECKOUT =================
 @app.route('/checkout', methods=['POST'])
-@login_required
 def checkout():
     items = request.json.get('items', [])
+
     for item in items:
         order = {
             'order_id': str(uuid.uuid4()),
             'product_id': item['product_id'],
-            'price_per_unit': Decimal(str(item['price'])),   # ✅ FIXED
+            'price_per_unit': Decimal(str(item['price'])),
             'quantity': int(item['quantity']),
-            'total_price': Decimal(str(item['price'])) * int(item['quantity']),  # ✅ FIXED
+            'total_price': Decimal(str(item['price'])) * int(item['quantity']),
             'ordered_at': datetime.utcnow().isoformat()
         }
         orders_table.put_item(Item=order)
+
     return jsonify({'message': 'Order placed'})
 
-# ================== FIX 3: review ==================
+# ================= REVIEW =================
 @app.route('/review/<product_id>', methods=['POST'])
-@login_required
 def add_review(product_id):
     rating = int(request.form['rating'])
 
@@ -99,6 +116,7 @@ def add_review(product_id):
         'rating': rating,
         'created_at': datetime.utcnow().isoformat()
     }
+
     reviews_table.put_item(Item=review)
 
     all_reviews = scan_table(reviews_table, Attr('product_id').eq(product_id))
@@ -114,22 +132,22 @@ def add_review(product_id):
 
     return redirect(url_for('index'))
 
-# ================== FIX 4: SEED DATA ==================
+# ================= SEED =================
 def seed():
     resp = users_table.scan(Limit=1)
     if resp.get('Count', 0) > 0:
         return
 
-    fid1 = str(uuid.uuid4())
+    print("Seeding data...")
 
     sample_products = [
         {
             'product_id': str(uuid.uuid4()),
             'name': 'Tomato',
-            'price': Decimal("40"),         # ✅ FIXED
+            'price': Decimal("40"),
             'unit': 'kg',
             'stock': 100,
-            'avg_rating': Decimal("4.5"),   # ✅ FIXED
+            'avg_rating': Decimal("4.5"),
             'status': 'active',
             'created_at': datetime.utcnow().isoformat()
         },
@@ -148,9 +166,9 @@ def seed():
     for p in sample_products:
         products_table.put_item(Item=p)
 
-    print("Seed completed")
+    print("Seed done!")
 
-# ================== MAIN ==================
+# ================= MAIN =================
 if __name__ == '__main__':
     seed()
     app.run(host='0.0.0.0', port=5000, debug=True)
