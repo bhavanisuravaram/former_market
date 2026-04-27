@@ -4,12 +4,13 @@ from functools import wraps
 import uuid, os, boto3, json
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
-from decimal import Decimal   # ✅ IMPORTANT
+from botocore.exceptions import ClientError
+from decimal import Decimal   # ✅ FIX
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'farmmarket-secret-2024')
 
-AWS_REGION = 'ap-south-1'
+AWS_REGION    = os.environ.get('AWS_REGION', 'ap-south-1')
 
 dynamodb = boto3.resource('dynamodb', region_name=AWS_REGION)
 
@@ -19,7 +20,7 @@ orders_table   = dynamodb.Table('fm_orders')
 reviews_table  = dynamodb.Table('fm_reviews')
 cart_table     = dynamodb.Table('fm_cart')
 
-# ================= SAFE CONVERSION =================
+# ✅ convert Decimal → float for UI
 def convert_decimals(obj):
     if isinstance(obj, list):
         return [convert_decimals(i) for i in obj]
@@ -29,7 +30,6 @@ def convert_decimals(obj):
         return float(obj)
     return obj
 
-# ================= SCAN =================
 def scan_table(table, filter_expr=None):
     kwargs = {}
     if filter_expr:
@@ -43,16 +43,22 @@ def scan_table(table, filter_expr=None):
         kwargs['ExclusiveStartKey'] = resp['LastEvaluatedKey']
     return items
 
+def current_user():
+    uid = session.get('user_id')
+    if not uid:
+        return None
+    resp = users_table.get_item(Key={'user_id': uid})
+    return resp.get('Item')
+
 # ================= HOME =================
 @app.route('/')
 def index():
     all_products = scan_table(products_table, Attr('status').eq('active'))
-    all_products = convert_decimals(all_products)
+    all_products = convert_decimals(all_products)   # ✅ FIX
 
     all_products.sort(key=lambda x: x.get('created_at', ''), reverse=True)
 
-    # ✅ ADD THIS BLOCK
-    all_users = scan_table(users_table)
+    all_users  = scan_table(users_table)
     all_orders = scan_table(orders_table)
 
     stats = {
@@ -62,21 +68,43 @@ def index():
         'orders':    len(all_orders),
     }
 
-    return render_template(
-        'index.html',
-        products=all_products[:8],
-        stats=stats   # ✅ THIS FIXES YOUR ERROR
-    )
+    return render_template('index.html', products=all_products[:8], stats=stats)
 
-# ================= PRODUCTS =================
-@app.route('/products')
-def products():
-    all_products = scan_table(products_table, Attr('status').eq('active'))
-    all_products = convert_decimals(all_products)
+# ================= LOGIN =================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
 
-    all_products.sort(key=lambda p: p.get('price', 0))
+        users = scan_table(users_table)
+        user = next((u for u in users if u['email'] == email), None)
 
-    return render_template('products.html', products=all_products)
+        if user and check_password_hash(user['password'], password):
+            session['user_id'] = user['user_id']
+            return redirect(url_for('index'))
+
+        flash('Invalid credentials')
+
+    return render_template('login.html')
+
+# ================= REGISTER =================
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        user = {
+            'user_id': str(uuid.uuid4()),
+            'name': request.form['name'],
+            'email': request.form['email'],
+            'password': generate_password_hash(request.form['password']),
+            'role': request.form['role'],
+            'created_at': datetime.utcnow().isoformat()
+        }
+
+        users_table.put_item(Item=user)
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
 
 # ================= ADD PRODUCT =================
 @app.route('/add-product', methods=['POST'])
@@ -84,23 +112,16 @@ def add_product():
     product = {
         'product_id': str(uuid.uuid4()),
         'name': request.form['name'],
-        'price': Decimal(request.form['price']),   # ✅ FIXED
+        'price': Decimal(request.form['price']),   # ✅ FIX
         'unit': request.form['unit'],
         'stock': int(request.form['stock']),
-        'avg_rating': Decimal("0.0"),              # ✅ FIXED
+        'avg_rating': Decimal("0.0"),              # ✅ FIX
         'status': 'active',
         'created_at': datetime.utcnow().isoformat()
     }
 
     products_table.put_item(Item=product)
     return redirect(url_for('index'))
-
-# ================= CART =================
-@app.route('/cart')
-def cart():
-    items = []
-    total = sum(Decimal(i['price']) * int(i['quantity']) for i in items)
-    return render_template('cart.html', items=items, total=float(total))
 
 # ================= CHECKOUT =================
 @app.route('/checkout', methods=['POST'])
@@ -113,7 +134,7 @@ def checkout():
             'product_id': item['product_id'],
             'price_per_unit': Decimal(str(item['price'])),
             'quantity': int(item['quantity']),
-            'total_price': Decimal(str(item['price'])) * int(item['quantity']),
+            'total_price': Decimal(str(item['price'])) * int(item['quantity']),  # ✅ FIX
             'ordered_at': datetime.utcnow().isoformat()
         }
         orders_table.put_item(Item=order)
@@ -141,7 +162,7 @@ def add_review(product_id):
         Key={'product_id': product_id},
         UpdateExpression='SET avg_rating = :a',
         ExpressionAttributeValues={
-            ':a': Decimal(str(round(avg, 1)))   # ✅ FIXED
+            ':a': Decimal(str(round(avg, 1)))   # ✅ FIX
         }
     )
 
@@ -153,8 +174,6 @@ def seed():
     if resp.get('Count', 0) > 0:
         return
 
-    print("Seeding data...")
-
     sample_products = [
         {
             'product_id': str(uuid.uuid4()),
@@ -165,25 +184,12 @@ def seed():
             'avg_rating': Decimal("4.5"),
             'status': 'active',
             'created_at': datetime.utcnow().isoformat()
-        },
-        {
-            'product_id': str(uuid.uuid4()),
-            'name': 'Spinach',
-            'price': Decimal("30"),
-            'unit': 'bunch',
-            'stock': 50,
-            'avg_rating': Decimal("4.8"),
-            'status': 'active',
-            'created_at': datetime.utcnow().isoformat()
         }
     ]
 
     for p in sample_products:
         products_table.put_item(Item=p)
 
-    print("Seed done!")
-
-# ================= MAIN =================
 if __name__ == '__main__':
     seed()
     app.run(host='0.0.0.0', port=5000, debug=True)
