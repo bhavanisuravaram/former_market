@@ -5,7 +5,7 @@ import uuid, os, boto3, json
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
-from decimal import Decimal   # ✅ FIX
+from decimal import Decimal  # ✅ ADDED
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'farmmarket-secret-2024')
@@ -20,7 +20,7 @@ orders_table   = dynamodb.Table('fm_orders')
 reviews_table  = dynamodb.Table('fm_reviews')
 cart_table     = dynamodb.Table('fm_cart')
 
-# ✅ convert Decimal → float for UI
+# ✅ SAFE DECIMAL CONVERTER
 def convert_decimals(obj):
     if isinstance(obj, list):
         return [convert_decimals(i) for i in obj]
@@ -47,16 +47,20 @@ def current_user():
     uid = session.get('user_id')
     if not uid:
         return None
-    resp = users_table.get_item(Key={'user_id': uid})
-    return resp.get('Item')
+    try:
+        resp = users_table.get_item(Key={'user_id': uid})
+        return resp.get('Item')
+    except Exception:
+        return None
 
 # ================= HOME =================
 @app.route('/')
 def index():
     all_products = scan_table(products_table, Attr('status').eq('active'))
-    all_products = convert_decimals(all_products)   # ✅ FIX
+    all_products = convert_decimals(all_products)  # ✅ FIX
 
     all_products.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    products = all_products[:8]
 
     all_users  = scan_table(users_table)
     all_orders = scan_table(orders_table)
@@ -68,13 +72,22 @@ def index():
         'orders':    len(all_orders),
     }
 
-    return render_template('index.html', products=all_products[:8], stats=stats)
+    return render_template('index.html', products=products, stats=stats)
+
+# ================= PRODUCTS =================
+@app.route('/products')
+def products():
+    all_products = scan_table(products_table, Attr('status').eq('active'))
+    all_products = convert_decimals(all_products)  # ✅ FIX
+
+    all_products.sort(key=lambda p: float(p.get('price', 0) or 0))
+    return render_template('products.html', products=all_products)
 
 # ================= LOGIN =================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
+        email = request.form['email'].strip().lower()
         password = request.form['password']
 
         users = scan_table(users_table)
@@ -100,7 +113,6 @@ def register():
             'role': request.form['role'],
             'created_at': datetime.utcnow().isoformat()
         }
-
         users_table.put_item(Item=user)
         return redirect(url_for('login'))
 
@@ -112,14 +124,13 @@ def add_product():
     product = {
         'product_id': str(uuid.uuid4()),
         'name': request.form['name'],
-        'price': Decimal(request.form['price']),   # ✅ FIX
+        'price': Decimal(request.form['price']),  # ✅ FIX
         'unit': request.form['unit'],
         'stock': int(request.form['stock']),
-        'avg_rating': Decimal("0.0"),              # ✅ FIX
+        'avg_rating': Decimal("0.0"),  # ✅ FIX
         'status': 'active',
         'created_at': datetime.utcnow().isoformat()
     }
-
     products_table.put_item(Item=product)
     return redirect(url_for('index'))
 
@@ -140,33 +151,6 @@ def checkout():
         orders_table.put_item(Item=order)
 
     return jsonify({'message': 'Order placed'})
-
-# ================= REVIEW =================
-@app.route('/review/<product_id>', methods=['POST'])
-def add_review(product_id):
-    rating = int(request.form['rating'])
-
-    review = {
-        'review_id': str(uuid.uuid4()),
-        'product_id': product_id,
-        'rating': rating,
-        'created_at': datetime.utcnow().isoformat()
-    }
-
-    reviews_table.put_item(Item=review)
-
-    all_reviews = scan_table(reviews_table, Attr('product_id').eq(product_id))
-    avg = sum(int(r['rating']) for r in all_reviews) / len(all_reviews)
-
-    products_table.update_item(
-        Key={'product_id': product_id},
-        UpdateExpression='SET avg_rating = :a',
-        ExpressionAttributeValues={
-            ':a': Decimal(str(round(avg, 1)))   # ✅ FIX
-        }
-    )
-
-    return redirect(url_for('index'))
 
 # ================= SEED =================
 def seed():
