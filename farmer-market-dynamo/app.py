@@ -51,7 +51,22 @@ def index():
 
     all_products.sort(key=lambda x: x.get('created_at', ''), reverse=True)
 
-    return render_template('index.html', products=all_products[:8])
+    # ✅ ADD THIS BLOCK
+    all_users = scan_table(users_table)
+    all_orders = scan_table(orders_table)
+
+    stats = {
+        'farmers':   sum(1 for u in all_users if u.get('role') == 'farmer'),
+        'products':  len(all_products),
+        'consumers': sum(1 for u in all_users if u.get('role') == 'consumer'),
+        'orders':    len(all_orders),
+    }
+
+    return render_template(
+        'index.html',
+        products=all_products[:8],
+        stats=stats   # ✅ THIS FIXES YOUR ERROR
+    )
 
 # ================= PRODUCTS =================
 @app.route('/products')
